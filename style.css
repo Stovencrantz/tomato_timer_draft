@@ -121,6 +121,7 @@ input:checked + .slider:before {
   width: 20px;
   left: 140px;
   transition: 1s all linear;
+  /* transform: rotate(360deg); */
 }
 
 #hand::before {

@@ -8,9 +8,11 @@ var secondsDisplay = document.querySelector("#seconds");
 var workMinutesInput = document.querySelector("#work-minutes");
 var restMinutesInput = document.querySelector("#rest-minutes");
 var messageDisplay = document.querySelector("#message");
+var handElement = document.querySelector("#hand");
 
 var totalSeconds = 0;
 var secondsElapsed = 0;
+let degrees=360;
 var interval;
 
 // PART ONE
@@ -74,6 +76,35 @@ function toggle() {
   }
 }
 
+function renderHand() {
+  handElement.style.transition = `${totalSeconds}s 1s all linear`;
+  handElement.style.transform = `rotate(${degrees}deg)`;
+}
+
+let hand = {
+  startDegree: 0,
+  endDegree: 360,
+  currentDegree: function() {
+    return 360*(secondsElapsed/totalSeconds)
+  },
+  start: function() {
+    handElement.style.transition = `${totalSeconds}s 1s all linear`;
+    handElement.style.transform = `rotate(${degrees}deg)`;
+    return;
+  },
+  pause: function() {
+    handElement.style.transition = `0.5s all linear`;
+    handElement.style.transform = `rotate(${this.currentDegree()}deg)`;
+    console.log("currentDegree: ", this.currentDegree())
+    return;
+  },
+  reset: function() {
+    handElement.style.transition = `all linear`;
+    handElement.style.transform = `rotate(${this.startPos}deg)`;
+    return;
+  }
+}
+
 function renderTime(min, sec) {
 // render a 00:00 format!!! 
   let minText = min;
@@ -92,10 +123,13 @@ function renderTime(min, sec) {
 function countdown(msg) {
   let minutes;
   let seconds;
+
+
   interval = setInterval(function() {
     minutes = Math.floor((totalSeconds-secondsElapsed)/60);
-    seconds = (totalSeconds-secondsElapsed)%60;
-    renderTime(minutes, seconds)
+    seconds = Math.floor((totalSeconds-secondsElapsed)%60);
+    renderTime(minutes, seconds);
+    console.log("degrees: ", degrees)
     console.log(minutes + " : " + seconds)
     if(secondsElapsed >= totalSeconds) {
       clearInterval(interval)
@@ -109,8 +143,16 @@ function startTimer() {
   // Write code to start the timer here
   //check that timers are x>=0;
   console.log("START");
-  messageDisplay.textContent = "";
-  if(workMinutesInput.value >= 0 && restMinutesInput.value >= 0) {
+  //check for if the timer ran its full cycle,
+  // If YES, reset secondsElapsed to 0, reset hand position to 0 degrees instantly
+  if(secondsElapsed >= totalSeconds) {
+    console.log("RESET");
+    secondsElapsed = 0;
+    hand.reset();
+    messageDisplay.textContent = "";
+  }
+
+  if(workMinutesInput.value > 0 && restMinutesInput.value > 0) {
     // push workMinInput & secMinInput to localStorage to save user preferences
     let timerPreferences = {"workTimer": workMinutesInput.value, "restTimer": restMinutesInput.value}
     localStorage.setItem("timer", JSON.stringify(timerPreferences));
@@ -120,6 +162,7 @@ function startTimer() {
       console.log(totalSeconds)
       let message = "Take a break";
       clearInterval(interval);
+      hand.start();
       countdown(message)
     }
     else {
@@ -127,6 +170,7 @@ function startTimer() {
       console.log(totalSeconds)
       let message = "Get back to work!"
       clearInterval(interval);
+      hand.start();
       countdown(message)
     }
   }
@@ -136,15 +180,16 @@ function startTimer() {
 
 function pauseTimer() {
   clearInterval(interval)
-  console.log("PAUSED")
+  hand.pause();
 }
 
 function stopTimer() {
   clearInterval(interval);
   secondsElapsed = 0;
-  let minutes = totalSeconds/60;
-  let seconds = totalSeconds%60;
+  let minutes = Math.floor(totalSeconds/60);
+  let seconds = Math.floor(totalSeconds%60);
   renderTime(minutes,seconds);
+  hand.reset();
 }
 
 init();
